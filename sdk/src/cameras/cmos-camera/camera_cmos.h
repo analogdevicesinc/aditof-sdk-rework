@@ -128,7 +128,7 @@ class CameraCmos : public aditof::Camera {
 
   private:
 
-    uint8_t convertCameraMode(const std::string &modes);
+    aditof::Status convertCameraMode(const std::string &modes, uint8_t *convertedMode);
 
     /**
      * @brief Default ADI module flash memory is Macronix MX25U6435F.

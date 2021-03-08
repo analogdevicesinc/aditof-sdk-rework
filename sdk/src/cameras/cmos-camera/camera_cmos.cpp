@@ -204,18 +204,20 @@ aditof::Status CameraCmos::getControl(const std::string &control,
     return status;
 }
 
-//To be reviewed / redone
-uint8_t CameraCmos::convertCameraMode(const std::string &modes) {
+aditof::Status CameraCmos::convertCameraMode(const std::string &modes, uint8_t *convertedMode) {
     std::vector<std::string> availableModes;
     aditof::Status status = aditof::Status::OK;
     if (status != getAvailableModes(availableModes)){
-        return 11;
+        return aditof::Status::GENERIC_ERROR;
     };
+
     auto it = std::find (availableModes.begin(), availableModes.end(), modes);
     if (it == availableModes.end()){
-        return 11;
+        return aditof::Status::GENERIC_ERROR;
     }
-    return (it - availableModes.begin());
+
+    *convertedMode = (it - availableModes.begin());
+    return status;
 }
 
 aditof::Status CameraCmos::initComputeLibrary(void) {
@@ -223,12 +225,15 @@ aditof::Status CameraCmos::initComputeLibrary(void) {
 
     LOG(INFO) << "initComputeLibrary";
     freeComputeLibrary();
+    uint8_t convertedMode;
 
     aditof::Status configStatus;
     size_t calFileSize = 0, jsonFileSize = 0, iniFileSize = 0;
     std::tie(configStatus, calFileSize, jsonFileSize, iniFileSize) = loadConfigData();
 
-    if (convertCameraMode(m_details.mode) == 11) {
+    status = convertCameraMode(m_details.mode, &convertedMode);
+
+    if (status != aditof::Status::OK) {
         LOG(ERROR) << "Invalid mode!";
         return aditof::Status::GENERIC_ERROR;
     }
@@ -241,9 +246,9 @@ aditof::Status CameraCmos::initComputeLibrary(void) {
 
             ConfigFileData depth_ini = {m_depthINIData, iniFileSize};
             
-            m_tofi_config = InitTofiConfig(&calData, NULL, &depth_ini, convertCameraMode(m_details.mode), &status);
+            m_tofi_config = InitTofiConfig(&calData, NULL, &depth_ini, convertedMode, &status);
         } else {
-            m_tofi_config = InitTofiConfig(&calData, NULL, NULL, convertCameraMode(m_details.mode), &status);
+            m_tofi_config = InitTofiConfig(&calData, NULL, NULL, convertedMode, &status);
         }
 
         if ((m_tofi_config == NULL) || (m_tofi_config->p_tofi_cal_config == NULL) || (status != ADI_TOFI_SUCCESS)) {
@@ -391,10 +396,17 @@ CameraCmos::processFrame(uint8_t * /*rawFrame*/, uint16_t * /*captureData*/,
 aditof::Status CameraCmos::getCurrentModeInfo(ModeInfo::modeInfo &info) {
     using namespace aditof;
     Status status = Status::OK;
+    uint8_t convertedMode;
+
+    status = convertCameraMode(m_details.mode, &convertedMode);
+    if (status != aditof::Status::OK) {
+        LOG(ERROR) << "Invalid mode!";
+        return aditof::Status::GENERIC_ERROR;
+    }
 
     ModeInfo *pModeInfo = ModeInfo::getInstance();
-    if (pModeInfo && 0 <= convertCameraMode(m_details.mode) && convertCameraMode(m_details.mode) < pModeInfo->getNumModes()) {
-        info = pModeInfo->getModeInfo(convertCameraMode(m_details.mode));
+    if (pModeInfo && 0 <= convertedMode && convertedMode < pModeInfo->getNumModes()) {
+        info = pModeInfo->getModeInfo(convertedMode);
         return Status::OK;
     } 
     return Status::GENERIC_ERROR;
