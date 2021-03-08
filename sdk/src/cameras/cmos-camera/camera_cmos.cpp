@@ -205,13 +205,16 @@ aditof::Status CameraCmos::getControl(const std::string &control,
 }
 
 //To be reviewed / redone
-uint8_t CameraCmos::convertCameraMode(std::string &modes) const {
+uint8_t CameraCmos::convertCameraMode(const std::string &modes) {
     std::vector<std::string> availableModes;
     aditof::Status status = aditof::Status::OK;
     if (status != getAvailableModes(availableModes)){
-        return -1;
+        return 11;
     };
     auto it = std::find (availableModes.begin(), availableModes.end(), modes);
+    if (it == availableModes.end()){
+        return 11;
+    }
     return (it - availableModes.begin());
 }
 
@@ -224,6 +227,11 @@ aditof::Status CameraCmos::initComputeLibrary(void) {
     aditof::Status configStatus;
     size_t calFileSize = 0, jsonFileSize = 0, iniFileSize = 0;
     std::tie(configStatus, calFileSize, jsonFileSize, iniFileSize) = loadConfigData();
+
+    if (convertCameraMode(m_details.mode) == 11) {
+        LOG(ERROR) << "Invalid mode!";
+        return aditof::Status::GENERIC_ERROR;
+    }
 
     if (configStatus == aditof::Status::OK) {
         ConfigFileData calData = {m_calData, calFileSize};
