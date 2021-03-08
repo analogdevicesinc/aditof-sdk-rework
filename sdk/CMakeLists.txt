@@ -160,24 +160,25 @@ if (USE_CHICONY AND RASPBERRYPI)
 endif()
 
 
-#libtofi - path to libtofi_config.so and libtofi_compute.so folder
+#LIBTOFI_LIBDIR_PATH - path to libtofi_config.so and libtofi_compute.so folder
 
 if (USE_CMOS)
-    set(libtofi "${CMAKE_SOURCE_DIR}/../libs")
-    
+    if (NOT LIBTOFI_LIBDIR_PATH)
+        set(LIBTOFI_LIBDIR_PATH "${CMAKE_SOURCE_DIR}/../libs")
+    endif()
     add_library(libtofi_compute SHARED IMPORTED)
     set_target_properties(libtofi_compute PROPERTIES
-         IMPORTED_LOCATION "${libtofi}/libtofi_compute.so"
+         IMPORTED_LOCATION "${LIBTOFI_LIBDIR_PATH}/libtofi_compute.so"
          IMPORTED_NO_SONAME 1
     )
-    target_link_libraries(${PROJECT_NAME} PUBLIC libtofi_compute)
+    target_link_libraries(${PROJECT_NAME} PRIVATE libtofi_compute)
 
     add_library(libtofi_config SHARED IMPORTED)
     set_target_properties(libtofi_config PROPERTIES
-             IMPORTED_LOCATION "${libtofi}/libtofi_config.so"
-             IMPORTED_NO_SONAME 2
+             IMPORTED_LOCATION "${LIBTOFI_LIBDIR_PATH}/libtofi_config.so"
+             IMPORTED_NO_SONAME 1
          )
-    target_link_libraries(${PROJECT_NAME} PUBLIC libtofi_config)
+    target_link_libraries(${PROJECT_NAME} PRIVATE libtofi_config)
 endif()
 
 if (CMAKE_COMPILER_IS_GNUCC)

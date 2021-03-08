@@ -205,11 +205,11 @@ aditof::Status CameraCmos::getControl(const std::string &control,
 }
 
 //To be reviewed / redone
-uint8_t CameraCmos::convertCameraMode(std::string modes){
+uint8_t CameraCmos::convertCameraMode(std::string &modes) const {
     std::vector<std::string> availableModes;
     aditof::Status status = aditof::Status::OK;
     if (status != getAvailableModes(availableModes)){
-        return 0;
+        return -1;
     };
     auto it = std::find (availableModes.begin(), availableModes.end(), modes);
     return (it - availableModes.begin());
@@ -355,7 +355,6 @@ aditof::Status CameraCmos::isValidFrame(const int numTotalFrames) {
     }
 
     return (aditof::Status::GENERIC_ERROR);
-    return (aditof::Status::OK);
 }
 
 aditof::Status CameraCmos::isValidMode(const uint8_t /*hdr_mode*/) {
