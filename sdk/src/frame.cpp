@@ -30,11 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef ITOF
-#include "cameras/itof-frame/frame_impl.h"
-#else 
-#include "cameras/dtof-frame/frame_impl.h"
-#endif
+#include "frame_impl.h"
 #include <aditof/frame.h>
 
 namespace aditof {
