@@ -39,6 +39,19 @@
 #include "tofi/floatTolin.h"
 #include "tofi/tofi_utils.h"
 
+/* TO DO: Uncomment if writeConfigBlock will be used
+struct ConfigurationData {
+    uint16_t id;
+    uint16_t ver;
+    uint32_t size;
+    uint16_t burst_layout;
+    uint16_t burst_num;
+    uint16_t burst_setup[4];
+    uint16_t start_address;
+    uint16_t rsvd;
+    uint32_t values;
+}; */
+
 CameraItof::CameraItof(
     std::shared_ptr<aditof::DepthSensorInterface> depthSensor,
     std::vector<std::shared_ptr<aditof::StorageInterface>> &eeproms,
@@ -469,4 +482,376 @@ aditof::Status CameraItof::loadModuleData() {
         return Status::GENERIC_ERROR;
     }*/
         return aditof::Status::UNAVAILABLE;
+}
+
+aditof::Status CameraItof::writeConfigBlock(const uint32_t offset){
+    /* TO DO: Investigate how much of this code will be covered by the driver
+    FILE *fid;
+    ConfigurationData configuration_data;
+    static uint16_t tempBuf[2];
+    
+    // Open configuration file 
+    // MUST BE PROPERLY SET!! original value is withouth "" 
+    fid = fopen("DEFAULT_CONFIG_FILE_NAME", "r");
+    
+    fseek(fid, offset, SEEK_SET);
+
+    // Read blocks
+    fread(&configuration_data.id, sizeof(uint16_t), 1u, fid);
+    fread(&configuration_data.ver, sizeof(uint16_t), 1u, fid);
+    fread(&configuration_data.size, sizeof(uint32_t), 1u, fid);
+    fread(&configuration_data.burst_layout, sizeof(uint16_t), 1u, fid);
+    fread(&configuration_data.burst_num, sizeof(uint16_t), 1u, fid);
+    fread(configuration_data.burst_setup, sizeof(uint16_t), 4u, fid);
+    // Write setup values 
+    for(uint32_t i = 0u; i < configuration_data.burst_num*2u; i+=2u)
+    {
+        m_depthSensor->writeAfeRegisters(&configuration_data.burst_setup[i], &configuration_data.burst_setup[i+1u], 1);
+    }
+    fread(&configuration_data.start_address, sizeof(uint16_t), 1u, fid);
+    fread(&configuration_data.rsvd, sizeof(uint16_t), 1u, fid);
+    fread(&configuration_data.values, sizeof(uint32_t), 1u, fid);
+    static uint16_t Data[16400u];
+    if(configuration_data.burst_layout == 1)
+    {
+        // Burst Write 
+        fread(Data, sizeof(uint16_t), configuration_data.values, fid);
+        for(uint32_t i = 0u; i < configuration_data.values; i++)
+        {
+            m_depthSensor->writeAfeRegisters(&configuration_data.start_address, &Data[i], 1);
+            
+            tempBuf[0] = 0x112u;
+            tempBuf[1] = 0xABCD;
+            m_depthSensor->writeAfeRegisters(&tempBuf[0], &tempBuf[1], 1);  
+        }
+    }
+    else
+    {
+        uint16_t nAddrLast = 0;
+        // Address data pairs 
+        for(uint32_t i = 0u; i < configuration_data.values; i+=2)
+        {
+            uint16_t nAddr;
+            uint16_t nData;
+            
+            fread(&nAddr, sizeof(uint16_t), 1u, fid);
+            fread(&nData, sizeof(uint16_t), 1u, fid);
+            
+
+            if(nAddrLast == nAddr)
+            {
+                tempBuf[0] = 0x112u;
+                tempBuf[1] = 0xABCD;
+                m_depthSensor->writeAfeRegisters(&tempBuf[0], &tempBuf[1], 1);
+            }
+            tempBuf[0] = nAddr;
+            tempBuf[1] = nData;
+            m_depthSensor->writeAfeRegisters(&tempBuf[0], &tempBuf[1], 1);
+            
+            nAddrLast = nAddr;
+        }  
+    }
+
+    fclose(fid);
+
+#if ADI_DEBUG
+
+
+    // Verify writes 
+    uint16_t DataPast = 0;
+    uint16_t AddrPast = 0;
+    uint16_t nAddr;
+    uint16_t DataNew;
+    fid = fopen(DEFAULT_CONFIG_FILE_NAME, "r");
+    fseek(fid, offset, SEEK_SET);
+
+    // Read block
+    fread(&configuration_data.id, sizeof(uint16_t), 1u, fid);
+    fread(&configuration_data.ver, sizeof(uint16_t), 1u, fid);
+    fread(&configuration_data.size, sizeof(uint32_t), 1u, fid);
+    fread(&configuration_data.burst_layout, sizeof(uint16_t), 1u, fid);
+    fread(&configuration_data.burst_num, sizeof(uint16_t), 1u, fid);
+    fread(configuration_data.burst_setup, sizeof(uint16_t), 4u, fid);
+    // read setup values 
+    for(uint32_t i = 0u; i < configuration_data.burst_num*2u; i+=2u)
+    {
+         nAddr = configuration_data.burst_setup[i];
+         DataNew = configuration_data.burst_setup[i+1u];
+         if(nAddr == 0x0)
+         {
+            uint16_t tmp = 4;
+            m_depthSensor->writeAfeRegisters(&tmp, &DataNew, 1);
+         }
+         else if(nAddr == 0x500)
+         {
+            m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+         }
+         else if(nAddr == 0x502)
+         {
+            m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+         }
+         else if(nAddr == 0xE04)
+         {
+            m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+         }
+         else if(nAddr == 0xE06)
+         {
+            m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+         }
+         else if(nAddr == 0x80C)
+         {
+            // VDMA address read/write offset
+            m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+         }
+         else if(nAddr == 0x14)
+         {
+            // Update digital clock gating because this changes throughout 
+            m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+         }
+         else if(nAddr == 0x132)
+         {
+            // Skip latched writes 
+            continue;
+         }
+         else if(nAddr == 0x126)
+         {
+            // Skip latched writes 
+            continue;
+         }
+         else if(nAddr == 0x528)
+         {
+            // Changes throughout boot process 
+            continue;
+         }
+         else if(nAddr == 0x4)
+         {
+            // Skip setup writes for a read 
+            continue;
+         }
+         else
+         {
+            if(nAddr == 0x2)
+            {
+                // Read instead of write
+                nAddr = 0x6;
+            }
+            if(nAddr == 0x504)
+            {
+                // Read instead of write
+                nAddr = 0x506;
+            }
+            if(nAddr == 0xE08)
+            {
+                // Read instead of write
+                nAddr = 0xE0A;
+            }
+            if(AddrPast == nAddr)
+            {
+                uint16_t dummyRead[2];
+                dummyRead[0] = 0x112;
+                m_depthSensor->readAfeRegisters(&dummyRead[0], &dummyRead[1], 1);
+            }
+             m_depthSensor->readAfeRegisters(&nAddr, &DataPast, 1);
+             if(DataPast != DataNew)
+             {
+                printf("FAILURE: Read Data %.4X != Expected data %.4X at address %.4X\n", DataPast, DataNew, nAddr);
+                return aditof::Status::GENERIC_ERROR;
+             }          
+             DataPast = DataNew;
+             AddrPast = nAddr;
+         }
+    }
+    fread(&configuration_data.start_address, sizeof(uint16_t), 1u, fid);
+    fread(&configuration_data.rsvd, sizeof(uint16_t), 1u, fid);
+    fread(&configuration_data.values, sizeof(uint32_t), 1u, fid);
+    if(configuration_data.burst_layout == 1)
+    {
+        // Burst Write 
+        fread(Data, sizeof(uint16_t), configuration_data.values, fid);
+        for(uint32_t i = 0u; i < configuration_data.values; i++)
+        {
+             nAddr = configuration_data.start_address; 
+             DataNew = Data[i];
+             if(nAddr == 0x0)
+             {
+                uint16_t tmp = 4;
+                m_depthSensor->writeAfeRegisters(&tmp, &DataNew, 1);
+             }
+             else if(nAddr == 0x500)
+             {
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0x502)
+             {
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0xE04)
+             {
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0xE06)
+             {
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0x80C)
+             {
+                // VDMA address read/write offset
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0x14)
+             {
+                // Update digital clock gating because this changes throughout 
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0x132)
+             {
+                // Skip latched writes 
+                continue;
+             }
+             else if(nAddr == 0x126)
+             {
+                // Skip latched writes 
+                continue;
+             }
+             else if(nAddr == 0x528)
+             {
+                // Changes throughout boot process 
+                continue;
+             }
+             else if(nAddr == 0x4)
+             {
+                // Skip setup writes for a read 
+                continue;
+             }
+             else
+             {
+                if(nAddr == 0x2)
+                {
+                    // Read instead of write
+                    nAddr = 0x6;
+                }
+                if(nAddr == 0x504)
+                {
+                    // Read instead of write
+                    nAddr = 0x506;
+                }
+                if(nAddr == 0xE08)
+                {
+                    // Read instead of write
+                    nAddr = 0xE0A;
+                }
+                if(AddrPast == nAddr)
+                {
+                    uint16_t dummyRead[2];
+                    dummyRead[0] = 0x112;
+                    m_depthSensor->readAfeRegisters(&dummyRead[0], &dummyRead[1], 1);
+                }
+                 m_depthSensor->readAfeRegisters(&nAddr, &DataPast, 1);
+                 if(DataPast != DataNew)
+                 {
+                    printf("FAILURE: Read Data %.4X != Expected data %.4X at address %.4X\n", DataPast, DataNew, nAddr);
+                    return aditof::Status::GENERIC_ERROR;
+                 }          
+                 DataPast = DataNew;
+                 AddrPast = nAddr;
+             }
+        }
+    }
+    else
+    {
+        // Address data pairs 
+        for(uint32_t i = 0u; i < configuration_data.values; i+=2)
+        {
+            fread(&nAddr, sizeof(uint16_t), 1u, fid);
+            fread(&DataNew, sizeof(uint16_t), 1u, fid);
+            
+             if(nAddr == 0x0)
+             {
+                uint16_t tmp = 4;
+                m_depthSensor->writeAfeRegisters(&tmp, &DataNew, 1);
+             }
+             else if(nAddr == 0x500)
+             {
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0x502)
+             {
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0xE04)
+             {
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0xE06)
+             {
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0x80C)
+             {
+                // VDMA address read/write offset
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0x14)
+             {
+                // Update digital clock gating because this changes throughout 
+                m_depthSensor->writeAfeRegisters(&nAddr, &DataNew, 1);
+             }
+             else if(nAddr == 0x132)
+             {
+                // Skip latched writes 
+                continue;
+             }
+             else if(nAddr == 0x126)
+             {
+                // Skip latched writes 
+                continue;
+             }
+             else if(nAddr == 0x528)
+             {
+                // Changes throughout boot process 
+                continue;
+             }
+             else if(nAddr == 0x4)
+             {
+                // Skip setup writes for a read
+                continue;
+             }
+             else
+             {
+                if(nAddr == 0x2)
+                {
+                    // Read instead of write
+                    nAddr = 0x6;
+                }
+                if(nAddr == 0x504)
+                {
+                    // Read instead of write
+                    nAddr = 0x506;
+                }
+                if(nAddr == 0xE08)
+                {
+                    // Read instead of write
+                    nAddr = 0xE0A;
+                }
+                if(AddrPast == nAddr)
+                {
+                    uint16_t dummyRead[2];
+                    dummyRead[0] = 0x112;
+                    m_depthSensor->readAfeRegisters(&dummyRead[0], &dummyRead[1], 1);
+                }
+                 m_depthSensor->readAfeRegisters(&nAddr, &DataPast, 1);
+                 if(DataPast != DataNew)
+                 {
+                    printf("FAILURE: Read Data %.4X != Expected data %.4X at address %.4X\n", DataPast, DataNew, nAddr);
+                    return aditof::Status::GENERIC_ERROR;
+                 }          
+                 DataPast = DataNew;
+                 AddrPast = nAddr;
+             }
+        }  
+    }
+
+    fclose(fid);
+#endif */
+    return aditof::Status::OK;   
 }

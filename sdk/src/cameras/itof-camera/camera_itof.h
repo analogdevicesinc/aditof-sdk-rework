@@ -44,6 +44,7 @@
 // #include "aditof_internal.h"
 // #include "tofi_utils.h"
 #include "mode_info.h"
+//#include "../../connections/target/v4l_buffer_access_interface.h"
 
 /* Camera controls
  *
@@ -251,6 +252,7 @@ class CameraItof : public aditof::Camera {
      * @see Status
      */
     aditof::Status loadModuleData();
+    aditof::Status writeConfigBlock(const uint32_t offset);
 
   private:
     using noArgCallable = std::function<aditof::Status()>;
