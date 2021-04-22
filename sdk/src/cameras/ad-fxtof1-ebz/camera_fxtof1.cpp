@@ -186,13 +186,11 @@ aditof::Status CameraFxTof1::initialize() {
 }
 
 aditof::Status CameraFxTof1::start() {
-    // return m_depthSensor->start(); // For now we keep the device open all the time
-    return aditof::Status::OK;
+    return m_depthSensor->start();
 }
 
 aditof::Status CameraFxTof1::stop() {
-    // return m_depthSensor->stop(); // For now we keep the device open all the time
-    return aditof::Status::OK;
+    return m_depthSensor->stop();
 }
 
 aditof::Status CameraFxTof1::setMode(const std::string &mode,
@@ -255,13 +253,38 @@ aditof::Status CameraFxTof1::setMode(const std::string &mode,
     // work properly. Setting the mode of the camera, programming it
     // with a different firmware would reset the value in the 0xc3da register
     if (m_details.frameType.type == "depth_only") {
-        uint16_t afeRegsAddr[5] = {0x4001, 0x7c22, 0xc3da, 0x4001, 0x7c22};
-        uint16_t afeRegsVal[5] = {0x0006, 0x0004, 0x03, 0x0007, 0x0004};
-        m_depthSensor->writeAfeRegisters(afeRegsAddr, afeRegsVal, 5);
+        status = m_depthSensor->stop();
+        if(status != Status::OK){
+            LOG(ERROR) << "Failed to stop device!";
+            return Status::GENERIC_ERROR;
+        }
+
+        uint16_t afeRegsAddr[1] = {0xc3da};
+        uint16_t afeRegsVal[1] = {0x03};
+        m_depthSensor->writeAfeRegisters(afeRegsAddr, afeRegsVal, 1);
+        
+        status = m_depthSensor->start();
+        if(status != Status::OK){
+            LOG(ERROR) << "Failed to start device!";
+            return Status::GENERIC_ERROR;
+        }
+
     } else if (m_details.frameType.type == "ir_only") {
-        uint16_t afeRegsAddr[5] = {0x4001, 0x7c22, 0xc3da, 0x4001, 0x7c22};
-        uint16_t afeRegsVal[5] = {0x0006, 0x0004, 0x05, 0x0007, 0x0004};
-        m_depthSensor->writeAfeRegisters(afeRegsAddr, afeRegsVal, 5);
+        status = m_depthSensor->stop();
+        if(status != Status::OK){
+            LOG(ERROR) << "Failed to stop device";
+            return Status::GENERIC_ERROR;
+        }
+
+        uint16_t afeRegsAddr[1] = {0xc3da};
+        uint16_t afeRegsVal[1] = {0x05};
+        m_depthSensor->writeAfeRegisters(afeRegsAddr, afeRegsVal, 1);
+
+        status = m_depthSensor->start();
+        if(status != Status::OK){
+            LOG(ERROR) << "Failed to start device";
+            return Status::GENERIC_ERROR;
+        }
     }
 
     m_details.mode = mode;
@@ -459,15 +482,29 @@ aditof::Status CameraFxTof1::getControl(const std::string &control,
 
 aditof::Status CameraFxTof1::setNoiseReductionTreshold(uint16_t treshold) {
     using namespace aditof;
+    Status status = Status::OK;
 
-    const size_t REGS_CNT = 5;
-    uint16_t afeRegsAddr[REGS_CNT] = {0x4001, 0x7c22, 0xc34a, 0x4001, 0x7c22};
-    uint16_t afeRegsVal[REGS_CNT] = {0x0006, 0x0004, 0x8000, 0x0007, 0x0004};
+    status = m_depthSensor->stop();
+        if(status != Status::OK){
+            LOG(ERROR) << "Failed to stop device";
+            return Status::GENERIC_ERROR;
+        }
 
-    afeRegsVal[2] |= treshold;
+    const size_t REGS_CNT = 1;
+    uint16_t afeRegsAddr[REGS_CNT] = {0xc34a};
+    uint16_t afeRegsVal[REGS_CNT] = {0x8000};
+
+    afeRegsVal[0] |= treshold;
     m_noiseReductionThreshold = treshold;
+    m_depthSensor->writeAfeRegisters(afeRegsAddr, afeRegsVal, 1);
 
-    return m_depthSensor->writeAfeRegisters(afeRegsAddr, afeRegsVal, 5);
+    status = m_depthSensor->start();
+        if(status != Status::OK){
+            LOG(ERROR) << "Failed to start device";
+            return Status::GENERIC_ERROR;
+        }
+
+    return status;
 }
 
 aditof::Status CameraFxTof1::setIrGammaCorrection(float gamma) {
@@ -480,23 +517,35 @@ aditof::Status CameraFxTof1::setIrGammaCorrection(float gamma) {
         y_val[i] = (uint16_t)(pow(x_val[i] / 4096.0f, gamma) * 1024.0f);
     }
 
-    uint16_t afeRegsAddr[] = {0x4001, 0x7c22, 0xc372, 0xc373, 0xc374, 0xc375,
+    status = m_depthSensor->stop();
+        if(status != Status::OK){
+            LOG(ERROR) << "Failed to stop device";
+            return Status::GENERIC_ERROR;
+        }
+
+    uint16_t afeRegsAddr[] = {0xc372, 0xc373, 0xc374, 0xc375,
                               0xc376, 0xc377, 0xc378, 0xc379, 0xc37a, 0xc37b,
-                              0xc37c, 0xc37d, 0x4001, 0x7c22};
-    uint16_t afeRegsVal[] = {0x0006,   0x0004,   0x7888,   0xa997,
+                              0xc37c, 0xc37d};
+    uint16_t afeRegsVal[] = {0x7888,   0xa997,
                              0x000a,   y_val[0], y_val[1], y_val[2],
                              y_val[3], y_val[4], y_val[5], y_val[6],
-                             y_val[7], y_val[8], 0x0007,   0x0004};
+                             y_val[7], y_val[8]};
 
-    status = m_depthSensor->writeAfeRegisters(afeRegsAddr, afeRegsVal, 8);
+    status = m_depthSensor->writeAfeRegisters(afeRegsAddr, afeRegsVal, 6);
     if (status != Status::OK) {
         return status;
     }
     status =
-        m_depthSensor->writeAfeRegisters(afeRegsAddr + 8, afeRegsVal + 8, 8);
+        m_depthSensor->writeAfeRegisters(afeRegsAddr + 6, afeRegsVal + 6, 6);
     if (status != Status::OK) {
         return status;
     }
+
+    status = m_depthSensor->start();
+        if(status != Status::OK){
+            LOG(ERROR) << "Failed to start device";
+            return Status::GENERIC_ERROR;
+        }
 
     m_irGammaCorrection = gamma;
 

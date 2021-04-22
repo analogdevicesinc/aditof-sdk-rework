@@ -276,9 +276,16 @@ aditof::Status CalibrationFxTof1::setMode(
     }
 
     /*Execute the mode change command*/
-    uint16_t afeRegsAddr[] = {0x4000, 0x4001, 0x7c22};
-    uint16_t afeRegsVal[] = {mode_id, 0x0004, 0x0004};
-    depthSensor->writeAfeRegisters(afeRegsAddr, afeRegsVal, 5);
+    
+    uint16_t afeRegsAddr[] = {0x4000};
+    uint16_t afeRegsVal[] = {mode_id};
+    depthSensor->writeAfeRegisters(afeRegsAddr, afeRegsVal, 1);
+    
+    status = depthSensor->start();
+    if (status != Status::OK) {
+        LOG(ERROR) << "Failed to start device";
+        return Status::GENERIC_ERROR;
+    }
 
     return Status::OK;
 }
