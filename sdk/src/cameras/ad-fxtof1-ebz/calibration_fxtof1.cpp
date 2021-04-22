@@ -277,10 +277,16 @@ aditof::Status CalibrationFxTof1::setMode(
 
     /*Execute the mode change command*/
     
+    status = depthSensor->stop();
+    if (status != Status::OK) {
+        LOG(ERROR) << "Failed to stop device";
+        return Status::GENERIC_ERROR;
+    }
+
     uint16_t afeRegsAddr[] = {0x4000};
     uint16_t afeRegsVal[] = {mode_id};
     depthSensor->writeAfeRegisters(afeRegsAddr, afeRegsVal, 1);
-    
+
     status = depthSensor->start();
     if (status != Status::OK) {
         LOG(ERROR) << "Failed to start device";

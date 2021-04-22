@@ -240,12 +240,14 @@ aditof::Status CameraFxTof1::setMode(const std::string &mode,
         m_devProgrammed = true;
     }
 
-    status = m_calibration.setMode(m_depthSensor, mode, m_details.maxDepth,
-                                   m_details.frameType.width,
-                                   m_details.frameType.height);
-    if (status != Status::OK) {
-        LOG(WARNING) << "Failed to set calibration mode";
-        return status;
+    if (mode != skCustomMode) {
+        unsigned width = m_details.frameType.dataDetails.front().width;
+        unsigned height = m_details.frameType.dataDetails.front().height;
+        status = m_calibration.setMode(m_depthSensor, mode, m_details.maxDepth, width, height);
+        if (status != Status::OK) {
+            LOG(WARNING) << "Failed to set calibration mode";
+            return status;
+        }
     }
 
     // register writes for enabling only one video stream (depth/ ir)
@@ -308,30 +310,32 @@ aditof::Status CameraFxTof1::setFrameType(const std::string &frameType) {
     using namespace aditof;
     Status status = Status::OK;
 
-    std::vector<FrameDetails> detailsList;
-    status = m_depthSensor->getAvailableFrameTypes(detailsList);
-    if (status != Status::OK) {
-        LOG(WARNING) << "Failed to get available frame types";
-        return status;
-    }
+    auto frameTypeIt = std::find_if(
+        m_availableSensorFrameTypes.begin(), m_availableSensorFrameTypes.end(),
+        [&frameType](const DepthSensorFrameType &d) {
+            return (d.type == frameType);
+        });
 
-    auto frameDetailsIt = std::find_if(
-        detailsList.begin(), detailsList.end(),
-        [&frameType](const FrameDetails &d) { return (d.type == frameType); });
-
-    if (frameDetailsIt == detailsList.end()) {
+    if (frameTypeIt == m_availableSensorFrameTypes.end()) {
         LOG(WARNING) << "Frame type: " << frameType
                      << " not supported by camera";
         return Status::INVALID_ARGUMENT;
     }
 
-    if (m_details.frameType != *frameDetailsIt) {
-        status = m_depthSensor->setFrameType(*frameDetailsIt);
-        if (status != Status::OK) {
-            LOG(WARNING) << "Failed to set frame type";
-            return status;
-        }
-        m_details.frameType = *frameDetailsIt;
+    status = m_depthSensor->setFrameType(*frameTypeIt);
+    if (status != Status::OK) {
+        LOG(WARNING) << "Failed to set frame type";
+        return status;
+    }
+    // Store the frame details in camera details
+    m_details.frameType.type = (*frameTypeIt).type;
+    // TO DO: m_details.frameType.cameraMode =
+    for (const auto item : (*frameTypeIt).content) {
+        FrameDataDetails fDataDetails;
+        fDataDetails.type = item.type;
+        fDataDetails.width = item.width;
+        fDataDetails.height = item.height;
+        m_details.frameType.dataDetails.emplace_back(fDataDetails);
     }
 
     if (!m_devStarted) {
@@ -350,15 +354,8 @@ aditof::Status CameraFxTof1::getAvailableFrameTypes(
     using namespace aditof;
     Status status = Status::OK;
 
-    std::vector<FrameDetails> frameDetailsList;
-    status = m_depthSensor->getAvailableFrameTypes(frameDetailsList);
-    if (status != Status::OK) {
-        LOG(WARNING) << "Failed to get available frame types";
-        return status;
-    }
-
-    for (const auto &item : frameDetailsList) {
-        availableFrameTypes.emplace_back(item.type);
+    for (const auto &frameType : m_availableSensorFrameTypes) {
+        availableFrameTypes.emplace_back(frameType.type);
     }
 
     return status;
@@ -391,7 +388,7 @@ aditof::Status CameraFxTof1::requestFrame(aditof::Frame *frame,
 
         m_calibration.calibrateCameraGeometry(
             frameDataLocation,
-            m_details.frameType.width * m_details.frameType.height / 2);
+            m_details.frameType.dataDetails.front().width * m_details.frameType.dataDetails.front().height);
     }
     return Status::OK;
 }
