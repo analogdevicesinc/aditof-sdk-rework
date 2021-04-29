@@ -25,6 +25,7 @@ option(WITH_MATLAB "Build matlab bindings?" OFF)
 option(WITH_OPEN3D "Build open3d bindings?" OFF)
 option(WITH_ROS "Build ros bindings?" OFF)
 option(WITH_NETWORK "Build network interface?" ON)
+option(WITH_OFFLINE "Build offline interface?" ON)
 option(USE_CHICONY "Use Chicony 006 camera?" OFF)
 option(USE_ITOF "Use ITOF camera?" OFF)
 option(USE_FXTOF1 "Use FXTOF1 camera?" OFF)
@@ -32,6 +33,10 @@ option(WITH_TOOLS "Build tools?" OFF)
 
 if (WITH_NETWORK)
         add_definitions(-DHAS_NETWORK)
+endif()
+
+if (WITH_OFFLINE)
+    add_definitions(-DHAS_OFFLINE)
 endif()
 
 if (USE_CHICONY)
