@@ -34,7 +34,7 @@
 #include <aditof/system.h>
 #include <glog/logging.h>
 #include <iostream>
-
+#include <fstream>
 using namespace aditof;
 
 int main(int argc, char *argv[]) {
@@ -110,11 +110,15 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    	std::fstream myfile;
+	myfile = std::fstream("file.bin", std::ios::out | std::ios::binary);
+
     FrameDataDetails fDetails;
     frame.getDataDetails("ir", fDetails);
-    for (unsigned int i = 0; i < 100; ++i){//fDetails.width * fDetails.height; ++i) {
-        std::cout << data1[i] << " ";
+    for (unsigned int i = 0; i < fDetails.width * fDetails.height; ++i) {
+        //std::cout << data1[i] << " ";
+    	myfile.write((char*)&data1[i],sizeof(data1));
     }
-
+myfile.close();
     return 0;
 }
