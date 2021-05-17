@@ -34,7 +34,16 @@
 #include <aditof/system.h>
 #include <glog/logging.h>
 #include <iostream>
+#include <fstream>
+#include "../../sdk/src/cameras/itof-camera/tofi/floatTolin.h"
 
+/*#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/core.hpp>
+#ifdef OPENCV2
+#include <opencv2/contrib/contrib.hpp>
+#endif
+*/
 using namespace aditof;
 
 int main(int argc, char *argv[]) {
@@ -73,26 +82,34 @@ int main(int argc, char *argv[]) {
         std::cout << "no frame type available!";
         return 0;
     }
-    status = camera->setFrameType(frameTypes.front());
+    status = camera->setFrameType("pcm"); //hardcoded for now as it is the simples kind of frame
     if (status != Status::OK) {
         LOG(ERROR) << "Could not set camera frame type!";
         return 0;
     }
 
-    std::vector<std::string> modes;
-    camera->getAvailableModes(modes);
-    if (modes.empty()) {
-        LOG(ERROR) << "no camera modes available!";
-        return 0;
-    }
-    status = camera->setMode(modes.front());
-    if (status != Status::OK) {
-        LOG(ERROR) << "Could not set camera mode!";
-        return 0;
-    }
-
+    // std::vector<std::string> modes;
+    // camera->getAvailableModes(modes);
+    // if (modes.empty()) {
+    //     LOG(ERROR) << "no camera modes available!";
+    //     return 0;
+    // }
+    // status = camera->setMode(modes.front());
+    // if (status != Status::OK) {
+    //     LOG(ERROR) << "Could not set camera mode!";
+    //     return 0;
+    // }
+	
+	int i=0;
+//   auto start = std::chrono::steady_clock::now();
+//	cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE);
+/*while(cv::waitKey(1) != 27 &&
+           getWindowProperty("Display Image", cv::WND_PROP_AUTOSIZE) >=
+               0 ) {
+           
+    cv::Mat mat;
+  */  
     aditof::Frame frame;
-
     status = camera->requestFrame(&frame);
     if (status != Status::OK) {
         LOG(ERROR) << "Could not request frame!";
@@ -102,7 +119,9 @@ int main(int argc, char *argv[]) {
     }
 
     uint16_t *data1;
-    status = frame.getData("depth", &data1);
+    uint16_t data[1024*1024];
+
+    status = frame.getData("ir", &data1);
 
     if (status != Status::OK) {
         LOG(ERROR) << "Could not get frame data!";
@@ -113,12 +132,34 @@ int main(int argc, char *argv[]) {
         LOG(ERROR) << "no memory allocated in frame";
         return 0;
     }
+	for (unsigned int i = 0; i < 1024 * 1024; ++i) {
+	data[i]=data1[i] >> 4;
+	if(data[i]<2048){
+         data[i] = Convert11bitFloat2LinearVal(data1[i]);
+     	} else {
+     		data[i]=0;
+     	}
+     }
+     
+//    mat = cv::Mat(1024, 1024, CV_16UC1, data);
+//     int max_value_of_IR_pixel = (1 << 12) - 1;
 
-    FrameDataDetails fDetails;
-    frame.getDataDetails("depth", fDetails);
-    for (unsigned int i = 0; i < fDetails.width * fDetails.height; ++i) {
-        std::cout << data1[i] << " ";
-    }
+    /* Distance factor IR */
+//    double distance_scale_ir = 255.0 / max_value_of_IR_pixel;
 
+//    mat.convertTo(mat, CV_8U, distance_scale_ir);
+  //  cv::cvtColor(mat, mat, cv::COLOR_GRAY2RGB);
+    //imshow("Display Image", mat);
+    //int k=cv::waitKey(10) & 0XFF;
+    //cv::waitKey(1);
+    //mat.release();
+    //cv::destroyAllWindows();
+for( int i = 0; i < 1024 * 1024;i++)
+std::cout << data[i];
+    //}
+    //auto finish = std::chrono::steady_clock::now();
+   // double elapsed_seconds = std::chrono::duration_cast<
+ // std::chrono::duration<double> >(finish - start).count();
+ // LOG(INFO) << "TIME: " << elapsed_seconds;
     return 0;
 }
