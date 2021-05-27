@@ -410,9 +410,14 @@ aditof::Status CameraItof::requestFrame(aditof::Frame *frame,
 
         applyCalibrationToFrame(frameDataLocation, std::atoi(m_details.mode.c_str()));
 
-        uint16_t *xyzFrameLocation;
-        frame->getData("xyz", &xyzFrameLocation);
-        memcpy(xyzFrameLocation, m_tofi_compute_context->p_xyz_frame, (m_details.frameType.height * m_details.frameType.width * sizeof(aditof::Point3I)));
+        std::string depthData((char *)m_depthINIData, GetDataFileSize(m_ini_depth.c_str()));
+        int pos = depthData.find("xyzEnable", 0);
+
+        if (depthData.substr(pos + strlen("xyzEnable=")) == "1") {
+            uint16_t *xyzFrameLocation;
+            frame->getData("xyz", &xyzFrameLocation);
+            memcpy(xyzFrameLocation, m_tofi_compute_context->p_xyz_frame, (m_details.frameType.height * m_details.frameType.width * sizeof(aditof::Point3I)));
+        }
     }
 
     return Status::OK;
