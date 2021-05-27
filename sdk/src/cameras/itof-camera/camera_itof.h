@@ -266,6 +266,9 @@ class CameraItof : public aditof::Camera {
     aditof::Status applyCalibrationToFrame(uint16_t *frame, const unsigned int mode);
 
   private:
+    aditof::Status getConcatFrame(uint16_t *buffer, uint8_t totalCaptures, size_t captureSize/*nb of pixels*/);
+
+  private:
     using noArgCallable = std::function<aditof::Status()>;
 
     aditof::CameraDetails m_details;

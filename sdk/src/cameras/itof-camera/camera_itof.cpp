@@ -313,6 +313,20 @@ aditof::Status setAttributesByMode(aditof::Frame& frame, const ModeInfo::modeInf
     return status;
 }
 
+aditof::Status CameraItof::getConcatFrame(uint16_t *buffer, uint8_t totalCaptures, size_t captureSize/*nb of pixels*/){
+    using namespace aditof;
+    Status status = Status::OK;
+    
+    for (uint8_t captureIdx = 0; captureIdx < totalCaptures; captureIdx++){
+        status = m_depthSensor->getFrame(buffer + captureIdx * captureSize);
+        if (status != Status::OK){
+            LOG(ERROR) << "Failed to get frame " << captureIdx << "/" << totalCaptures;
+            return status;
+        }
+    }
+    return status;
+}
+
 aditof::Status CameraItof::requestFrame(aditof::Frame *frame,
                                         aditof::FrameUpdateCallback /*cb*/) {
     using namespace aditof;
@@ -354,7 +368,9 @@ aditof::Status CameraItof::requestFrame(aditof::Frame *frame,
     uint16_t *embedFrame = nullptr;
     frame->getData("frameData", &embedFrame);
 
-    status = m_depthSensor->getFrame(embedFrame);
+
+    status = getConcatFrame(embedFrame, totalCaptures, m_details.frameType.height *  m_details.frameType.width);
+    //status = m_depthSensor->getFrame(embedFrame);
 
     if (status != Status::OK) {
         LOG(WARNING) << "Failed to get embedded frame from device";

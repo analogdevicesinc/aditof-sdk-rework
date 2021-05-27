@@ -675,8 +675,8 @@ aditof::Status Adsd3100Sensor::getFrame(uint16_t *buffer) {
     uint8_t *pdata;
     
     dev = &m_implData->videoDevs[0];
-
-    for (int idx = 0; idx < m_capturesPerFrame; idx++) {
+    int idx = 0;//TODO to be removed
+    //for (int idx = 0; idx < m_capturesPerFrame; idx++) {
         status = waitForBufferPrivate(dev);
         if (status != Status::OK) {
             return status;
@@ -701,7 +701,7 @@ aditof::Status Adsd3100Sensor::getFrame(uint16_t *buffer) {
         if (status != Status::OK) {
             return status;
         }
-    }
+   // }
     
     #ifdef SAVE_RAW_FRAMES
     saveFrame("_full_raw", (char*)buffer, buf_data_len * m_capturesPerFrame);
