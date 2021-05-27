@@ -666,6 +666,17 @@ void saveFrame(std::string id, char* data, size_t size){
     g.close();
 }
 
+#define FSYNC_PATH
+void toggleFsync(){
+    using namespace std;
+    ofstream gpio;
+    static int state;
+    state = !state;
+    gpio.open("/sys/class/gpio/gpio156/value", ofstream::out);
+    gpio << std::to_string(state) << endl;
+    gpio.close();
+}
+
 aditof::Status Adsd3100Sensor::getFrame(uint16_t *buffer) {
      using namespace aditof;
     struct v4l2_buffer buf[MAX_SUBFRAMES_COUNT];
@@ -675,7 +686,8 @@ aditof::Status Adsd3100Sensor::getFrame(uint16_t *buffer) {
     uint8_t *pdata;
     
     dev = &m_implData->videoDevs[0];
-
+    
+    toggleFsync();
     for (int idx = 0; idx < m_capturesPerFrame; idx++) {
         status = waitForBufferPrivate(dev);
         if (status != Status::OK) {
