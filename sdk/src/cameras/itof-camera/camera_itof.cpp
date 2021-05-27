@@ -320,7 +320,7 @@ aditof::Status CameraItof::getConcatFrame(uint16_t *buffer, uint8_t totalCapture
     for (uint8_t captureIdx = 0; captureIdx < totalCaptures; captureIdx++){
         status = m_depthSensor->getFrame(buffer + captureIdx * captureSize);
         if (status != Status::OK){
-            LOG(ERROR) << "Failed to get frame " << captureIdx << "/" << totalCaptures;
+            LOG(ERROR) << "Failed to get frame " << std::to_string(captureIdx) << "/" << std::to_string(totalCaptures);
             return status;
         }
     }
