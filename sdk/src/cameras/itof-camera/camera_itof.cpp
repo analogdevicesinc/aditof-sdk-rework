@@ -52,6 +52,7 @@ CameraItof::CameraItof(
       m_modechange_framedrop_count(0) {
     m_details.mode = "short_throw";
     m_details.cameraId = "";
+    m_xyzEnabled = false;
 
     // Define some of the controls of this camera
     m_controls.emplace("initialization_config", std::string(PROJECT_DIR) + "/sdk/src/cameras/itof-camera/config/config_toro.json");
@@ -347,7 +348,7 @@ aditof::Status CameraItof::requestFrame(aditof::Frame *frame,
     if (m_details.frameType.type == "pcm"){
         frame->getData("ir", &frameDataLocation);
     }
-    else{
+    else {
         frame->getData("raw", &frameDataLocation);
     }
 
@@ -410,11 +411,8 @@ aditof::Status CameraItof::requestFrame(aditof::Frame *frame,
 
         applyCalibrationToFrame(frameDataLocation, std::atoi(m_details.mode.c_str()));
 
-        std::string depthData((char *)m_depthINIData, GetDataFileSize(m_ini_depth.c_str()));
-        int pos = depthData.find("xyzEnable", 0);
-
-        if (depthData.substr(pos + strlen("xyzEnable=")) == "1") {
-            uint16_t *xyzFrameLocation;
+        if (m_xyzEnabled) {
+            uint16_t* xyzFrameLocation;
             frame->getData("xyz", &xyzFrameLocation);
             memcpy(xyzFrameLocation, m_tofi_compute_context->p_xyz_frame, (m_details.frameType.height * m_details.frameType.width * sizeof(aditof::Point3I)));
         }
@@ -603,6 +601,13 @@ std::tuple<aditof::Status, int, int, int> CameraItof::loadConfigData(void) {
     if (status == 0) {
         LOG(INFO) << "Unable to load cfile contents\n";
         return retErr;
+    }
+
+    std::string depthData((char*)m_depthINIData, GetDataFileSize(m_ini_depth.c_str()));
+    int pos = depthData.find("xyzEnable", 0);
+
+    if (depthData.substr(pos + strlen("xyzEnable=")) == "1") {
+        m_xyzEnabled = true;
     }
 
     return std::make_tuple(aditof::Status::OK, calFileSize, jsonFileSize, iniFileSize);
