@@ -49,10 +49,9 @@ CameraItof::CameraItof(
     std::vector<std::shared_ptr<aditof::StorageInterface>> &eeproms,
     std::vector<std::shared_ptr<aditof::TemperatureSensorInterface>> &tSensors)
     : m_depthSensor(depthSensor), m_devStarted(false),
-      m_modechange_framedrop_count(0) {
+      m_modechange_framedrop_count(0), m_xyzEnabled(false) {
     m_details.mode = "short_throw";
     m_details.cameraId = "";
-    m_xyzEnabled = false;
 
     // Define some of the controls of this camera
     m_controls.emplace("initialization_config", std::string(PROJECT_DIR) + "/sdk/src/cameras/itof-camera/config/config_toro.json");
@@ -276,6 +275,10 @@ aditof::Status CameraItof::setFrameType(const std::string &frameType) {
     m_details.frameType.height = ModeInfo::getInstance()->getModeInfo(frameType).height;
     m_details.frameType.totalCaptures = ModeInfo::getInstance()->getModeInfo(frameType).subframes;
     for (const auto item : (*frameTypeIt).content) {
+        if (item.type == "xyz" && !m_xyzEnabled) {
+            continue;
+        }
+
         FrameDataDetails fDataDetails;
         fDataDetails.type = item.type;
         fDataDetails.width = item.width;
@@ -606,7 +609,7 @@ std::tuple<aditof::Status, int, int, int> CameraItof::loadConfigData(void) {
     std::string depthData((char*)m_depthINIData, GetDataFileSize(m_ini_depth.c_str()));
     int pos = depthData.find("xyzEnable", 0);
 
-    if (depthData.substr(pos + strlen("xyzEnable=")) == "1") {
+    if (depthData.at(pos + strlen("xyzEnable=")) == '1') {
         m_xyzEnabled = true;
     }
 
