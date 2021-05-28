@@ -22,6 +22,8 @@
 #include <unordered_map>
 #include "cameras/itof-camera/mode_info.h"
 
+#include <unistd.h>
+
 #define MAX_SUBFRAMES_COUNT 10 // maximum number of subframes that are used to create a full frame (maximum total_captures of all modes)
 #define EXTRA_BUFFERS_COUNT 4  // how many extra buffers are sent to the driver in addition to the total_captures of a mode
 
@@ -94,6 +96,9 @@ static int xioctl(int fh, unsigned int request, void *arg) {
 
     return r;
 }
+
+void toggleFsync();
+void setFsync(uint8_t state);
 
 Adsd3100Sensor::Adsd3100Sensor(const std::string &driverPath,
                                const std::string &driverSubPath,
@@ -301,12 +306,20 @@ aditof::Status Adsd3100Sensor::stop() {
             return Status::BUSY;
         }
         LOG(INFO) << "Stopping device";
-
+	toggleFsync();
+	toggleFsync();
+	toggleFsync();
+	toggleFsync();
+	toggleFsync();
+	toggleFsync();
         if (xioctl(dev->fd, VIDIOC_STREAMOFF, &dev->videoBuffersType) != 0) {
             LOG(WARNING) << "VIDIOC_STREAMOFF error "
                          << "errno: " << errno << " error: " << strerror(errno);
             return Status::GENERIC_ERROR;
         }
+	toggleFsync();
+	toggleFsync();
+	toggleFsync();
 
         dev->started = false;
     }
@@ -667,14 +680,22 @@ void saveFrame(std::string id, char* data, size_t size){
 }
 
 #define FSYNC_PATH
-void toggleFsync(){
+#define FSYNC_TOGGLE_DELAY_uS (10)
+void setFsync(uint8_t state){
     using namespace std;
     ofstream gpio;
-    static int state;
-    state = !state;
+    //static uint8_t state = 0xff;
     gpio.open("/sys/class/gpio/gpio156/value", ofstream::out);
-    gpio << std::to_string(state) << endl;
+    gpio << ((state) ? "1" : "0") << endl;
+    //LOG(INFO) << "setting FSYNC to: " << ((state) ? "1" : "0") << endl;
     gpio.close();
+}
+
+void toggleFsync(){
+	setFsync(0xff);
+	usleep(FSYNC_TOGGLE_DELAY_uS);
+	setFsync(0x00);
+	usleep(FSYNC_TOGGLE_DELAY_uS);
 }
 
 aditof::Status Adsd3100Sensor::getFrame(uint16_t *buffer) {
