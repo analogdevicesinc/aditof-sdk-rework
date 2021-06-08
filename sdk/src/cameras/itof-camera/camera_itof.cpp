@@ -141,7 +141,10 @@ aditof::Status CameraItof::initialize() {
         if (cJSON_IsString(json_depth_ini_file) && (json_depth_ini_file->valuestring != NULL)) {
             // save depth ini file location
             m_ini_depth = std::string(CONFIG_DIR_NAME) + "/" + std::string(json_depth_ini_file->valuestring);
-        }
+        } else {
+            LOG(ERROR) << "DEPTH_INI not defined in JSON config file";
+            return Status::GENERIC_ERROR;
+         }
 
         // Get optional power config
         const cJSON *json_vaux_pwr = cJSON_GetObjectItemCaseSensitive(config_json, "VAUX_POWER_ENABLE");
@@ -399,7 +402,7 @@ aditof::Status CameraItof::requestFrame(aditof::Frame *frame,
         frameDataLocation[i] = Convert11bitFloat2LinearVal(frameDataLocation[i]);
     }
 
-    if (totalCaptures > 1) {
+    if ((totalCaptures > 1) && (m_controls["enableDepthCompute"] == "on")) {
 
         if (NULL == m_tofi_compute_context) {
             LOG(ERROR) << "Depth compute libray not initialized";
