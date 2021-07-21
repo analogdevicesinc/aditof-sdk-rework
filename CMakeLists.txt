@@ -30,6 +30,15 @@ option(USE_ITOF "Use ITOF camera?" ON)
 option(WITH_TOOLS "Build tools?" OFF)
 option(USE_DEPTH_COMPUTE_STUBS "Use empty generated libs?" OFF)
 
+############################# Dependencies ####################################
+
+# Glog
+set(GLOG_EXTERN_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/common/glog)
+set(GLOG_STATIC_LIB_DIRECTORY ${GLOG_EXTERN_DIRECTORY}/build_0_3_5)
+set(GLOG_INCLUDE_DIRECTORY ${GLOG_EXTERN_DIRECTORY}/src/src/)
+add_definitions(-DGLOG_NO_ABBREVIATED_SEVERITIES)
+add_subdirectory(${GLOG_EXTERN_DIRECTORY} ${GLOG_STATIC_LIB_DIRECTORY}/${LIB_BUILD_TYPE})
+
 if (WITH_NETWORK)
         add_definitions(-DHAS_NETWORK)
 endif()

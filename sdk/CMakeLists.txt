@@ -7,7 +7,6 @@ if(USE_DEPTH_COMPUTE_STUBS)
 endif()
 
 add_definitions(-DSDK_EXPORTS)
-find_package(glog 0.3.5 REQUIRED)
 find_package(Protobuf 3.9.0 REQUIRED)
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS src/connections/usb/usb_buffer.proto)
