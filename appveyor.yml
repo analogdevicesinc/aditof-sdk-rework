@@ -3,12 +3,14 @@ version: '1.0.{build}'
 image:
     - Visual Studio 2019
 cache:
-    - C:\projects\aditof-sdk-rework\deps\glog -> ci\appveyor\install_glog.bat
-    - C:\projects\aditof-sdk-rework\deps\protobuf -> ci\appveyor\install_protobuf.bat
+    - C:\projects\aditof-sdk-rework\common\glog\build_0_3_5
+    - C:\projects\aditof-sdk-rework\common\protobuf\build_3_9_0
     - C:\projects\aditof-sdk-rework\deps\libwebsockets -> ci\appveyor\install_websockets.bat
     - C:\tools\opencv -> ci\appveyor\install_opencv.bat
 
 install:
+    - git submodule update --init --recursive
+
     - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" (
             set generator=Visual Studio 14 2015
         ) else if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (
@@ -25,12 +27,6 @@ install:
 
 build_script:
 
-    # x64 glog install
-    - C:\projects\aditof-sdk-rework\ci\appveyor\install_glog.bat "Release" "x64"
-    - C:\projects\aditof-sdk-rework\ci\appveyor\install_glog.bat "Debug" "x64"
-    # x64 protobuf install
-    - C:\projects\aditof-sdk-rework\ci\appveyor\install_protobuf.bat "Release" "x64"
-    - C:\projects\aditof-sdk-rework\ci\appveyor\install_protobuf.bat "Debug" "x64"
     # x64 websockets install
     - C:\projects\aditof-sdk-rework\ci\appveyor\install_websockets.bat "Release" "x64"
     - C:\projects\aditof-sdk-rework\ci\appveyor\install_websockets.bat "Debug" "x64"
@@ -43,7 +39,7 @@ build_script:
       -DWITH_PYTHON=on \
       -DWITH_OPENCV=on \
       -DOpenCV_DIR="C:\tools\opencv\build\x64\vc15\lib" \
-      -DCMAKE_PREFIX_PATH="C:\projects\aditof-sdk-rework\deps\protobuf\build_3_9_0x64\local_path\protobuf;C:\projects\aditof-sdk-rework\deps\libwebsockets\build_3_1_stablex64\local_path\websockets" \
+      -DCMAKE_PREFIX_PATH="C:\projects\aditof-sdk-rework\deps\libwebsockets\build_3_1_stablex64\local_path\websockets" \
       -DOPENSSL_INCLUDE_DIRS="C:\OpenSSL-Win64\include" \
       -DUSE_ITOF=ON
       -DUSE_DEPTH_COMPUTE_STUBS=ON
@@ -56,7 +52,7 @@ build_script:
       -DWITH_PYTHON=on \
       -DWITH_OPENCV=on \
       -DOpenCV_DIR="C:\tools\opencv\build\x64\vc15\lib" \
-      -DCMAKE_PREFIX_PATH="C:\projects\aditof-sdk-rework\deps\protobuf\build_3_9_0x64\local_path\protobuf;C:\projects\aditof-sdk-rework\deps\libwebsockets\build_3_1_stablex64\local_path\websockets" \
+      -DCMAKE_PREFIX_PATH="C:\projects\aditof-sdk-rework\deps\libwebsockets\build_3_1_stablex64\local_path\websockets" \
       -DOPENSSL_INCLUDE_DIRS="C:\OpenSSL-Win64\include" \
       -DUSE_ITOF=ON
       -DUSE_DEPTH_COMPUTE_STUBS=ON
@@ -64,12 +60,6 @@ build_script:
     - cmake --build . --config "Debug"
     - ps: popd
 
-    # x86 glog install
-    - C:\projects\aditof-sdk-rework\ci\appveyor\install_glog.bat "Release" "Win32"
-    - C:\projects\aditof-sdk-rework\ci\appveyor\install_glog.bat "Debug" "Win32"
-    # x86 protobuf install
-    - C:\projects\aditof-sdk-rework\ci\appveyor\install_protobuf.bat "Release" "Win32"
-    - C:\projects\aditof-sdk-rework\ci\appveyor\install_protobuf.bat "Debug" "Win32"
     # x86 websockets install
     - C:\projects\aditof-sdk-rework\ci\appveyor\install_websockets.bat "Release" "Win32"
     - C:\projects\aditof-sdk-rework\ci\appveyor\install_websockets.bat "Debug" "Win32"
@@ -81,7 +71,7 @@ build_script:
     - cmake -G "%generator%" -A "Win32" \
       -DWITH_EXAMPLES=off \
       -DWITH_PYTHON=on \
-      -DCMAKE_PREFIX_PATH="C:\projects\aditof-sdk-rework\deps\protobuf\build_3_9_0Win32\local_path\protobuf;C:\projects\aditof-sdk-rework\deps\libwebsockets\build_3_1_stableWin32\local_path\websockets" \
+      -DCMAKE_PREFIX_PATH="C:\projects\aditof-sdk-rework\deps\libwebsockets\build_3_1_stableWin32\local_path\websockets" \
       -DOPENSSL_INCLUDE_DIRS="C:\OpenSSL-Win32\include" \
       -DUSE_ITOF=ON
       -DUSE_DEPTH_COMPUTE_STUBS=ON
@@ -93,7 +83,7 @@ build_script:
     - cmake -G "%generator%" -A "Win32" \
       -DWITH_EXAMPLES=off \
       -DWITH_PYTHON=on \
-      -DCMAKE_PREFIX_PATH="C:\projects\aditof-sdk-rework\deps\protobuf\build_3_9_0Win32\local_path\protobuf;C:\projects\aditof-sdk-rework\deps\libwebsockets\build_3_1_stableWin32\local_path\websockets" \
+      -DCMAKE_PREFIX_PATH="C:\projects\aditof-sdk-rework\deps\libwebsockets\build_3_1_stableWin32\local_path\websockets" \
       -DOPENSSL_INCLUDE_DIRS="C:\OpenSSL-Win32\include" \
       -DUSE_ITOF=ON
       -DUSE_DEPTH_COMPUTE_STUBS=ON
