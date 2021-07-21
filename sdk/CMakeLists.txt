@@ -7,7 +7,7 @@ if(USE_DEPTH_COMPUTE_STUBS)
 endif()
 
 add_definitions(-DSDK_EXPORTS)
-find_package(Protobuf 3.9.0 REQUIRED)
+find_package(Protobuf 3.9.0 REQUIRED HINTS ${PROTOBUF_STATIC_LIB_DIRECTORY})
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS src/connections/usb/usb_buffer.proto)
 get_filename_component(GENERATED_PROTO_FILES_DIR ${PROTO_HDRS} DIRECTORY)

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(uvc-gadget)
 
-find_package(Protobuf 3.9.0 REQUIRED)
+find_package(Protobuf 3.9.0 REQUIRED HINTS ${PROTOBUF_STATIC_LIB_DIRECTORY})
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HRDS buffer.proto)
 
