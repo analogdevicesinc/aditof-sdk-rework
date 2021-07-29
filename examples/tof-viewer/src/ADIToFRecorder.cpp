@@ -634,7 +634,7 @@ void ADIToFRecorder::recordThread()
 
 		//Raw Data
 		uint16_t* rawData;
-		frame->getData(aditof::FrameDataType::RAW , &rawData);
+		frame->getData("raw" , &rawData);
 
 		int width = m_frameDetails.width;
 		int height = m_frameDetails.height;
@@ -684,7 +684,7 @@ void ADIToFRecorder::recordFSFThread()
 			//Create Stream Info IR, sstreamIdx = 0
 			uint16_t* irData;
             frame->getData("ir", &irData);
-			stream.streamHeader.TimeStamp = frameDetails.FrameNum;
+			stream.streamHeader.TimeStamp = frameDetails.totalCaptures;
 			stream.streamHeader.CompressedStreamSize = size;
 			stream.optionalStreamHeader = "ADI"; //put real value
 			stream.streamComment = "IR";//put real value
@@ -702,7 +702,7 @@ void ADIToFRecorder::recordFSFThread()
 			//Create Stream Info DEPTH, sstreamIdx = 1
 			uint16_t* depthData;
             frame->getData("depth", &depthData);
-			stream.streamHeader.TimeStamp = frameDetails.FrameNum;
+			stream.streamHeader.TimeStamp = frameDetails.totalCaptures;
 			stream.streamHeader.CompressedStreamSize = size;
 			stream.optionalStreamHeader = "ADI"; //put real value
 			stream.streamComment = "DEPTH";//put real value
@@ -725,8 +725,8 @@ void ADIToFRecorder::recordFSFThread()
 				size_t xBuffCnt = 0;
 				size_t yBuffCnt = 0;
 				size_t zBuffCnt = 0;
-				frame->getData(aditof::FrameDataType::XYZ, &xyzData);
-				stream.streamHeader.TimeStamp = frameDetails.FrameNum;
+				frame->getData("xyz", &xyzData);
+				stream.streamHeader.TimeStamp = frameDetails.totalCaptures;
 				stream.optionalStreamHeader = "ADI"; //put real value
 				stream.streamComment = "X";//put real value
 			
@@ -756,7 +756,7 @@ void ADIToFRecorder::recordFSFThread()
 				}
 
 				//Y component
-				stream.streamHeader.TimeStamp = frameDetails.FrameNum;
+				stream.streamHeader.TimeStamp = frameDetails.totalCaptures;
 				stream.streamHeader.CompressedStreamSize = yBuffCnt;
 				stream.optionalStreamHeader = "ADI"; //put real value
 				stream.streamComment = "Y";//put real value
@@ -773,7 +773,7 @@ void ADIToFRecorder::recordFSFThread()
 				}
 
 				//Z component
-				stream.streamHeader.TimeStamp = frameDetails.FrameNum;
+				stream.streamHeader.TimeStamp = frameDetails.totalCaptures;
 				stream.streamHeader.CompressedStreamSize = zBuffCnt;
 				stream.optionalStreamHeader = "ADI"; //put real value
 				stream.streamComment = "Z";//put real value
@@ -798,14 +798,14 @@ void ADIToFRecorder::recordFSFThread()
 		//Get the RAW frames
 		//Create Stream Info RAW, streamIdx = 0
 		uint16_t* rawData;
-		frame->getData(aditof::FrameDataType::RAW, &rawData);
+		frame->getData("raw", &rawData);
 
         uint16_t *pHeader = nullptr;
-        frame->getData(aditof::FrameDataType::EMBED_HDR, &pHeader);
+        frame->getData("header", &pHeader);
 
 		for (size_t streamCnt = 0; streamCnt < fileHeaderRaw.nStreams; streamCnt++)
 		{
-			streamRaw.streamHeader.TimeStamp = frameDetails.FrameNum;
+			streamRaw.streamHeader.TimeStamp = frameDetails.totalCaptures;
 			streamRaw.streamHeader.CompressedStreamSize = size;
 			streamRaw.optionalStreamHeader.assign(reinterpret_cast<const char*>(pHeader) + (EMBED_HDR_LENGTH * streamCnt), EMBED_HDR_LENGTH);
 			streamRaw.streamComment = "RAW";
@@ -944,7 +944,7 @@ void ADIToFRecorder::playbackFSFThread()
 
         frame->getData("ir", &frameDataLocationIR);
         frame->getData("depth", &frameDataLocationDEPTH);
-		frame->getData(aditof::FrameDataType::XYZ, &frameDataLocationXYZ);
+		frame->getData("xyz", &frameDataLocationXYZ);
 
 		//Verify that the buffers are loaded and match the required size
 		if ((frameDataLocationIR != nullptr && frameDataLocationDEPTH != nullptr)
