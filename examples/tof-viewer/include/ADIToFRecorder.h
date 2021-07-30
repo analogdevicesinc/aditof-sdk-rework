@@ -254,8 +254,8 @@ private:
     //FSF Read:
     FILE* m_playbackFSFFile;
     fsf_data_t fsfData;
-    aditof::FSF* pFsfRead = NULL;
-    aditof::FSF* pFsfWrite = NULL;
+    aditof::FSF_Common *pFsfRead = NULL;
+    aditof::FSF_Common *pFsfWrite = NULL;
     aditof::OptionalFileHeader optFileHeader;
     aditof::StreamInfo streamInfo;
     aditof::Stream stream;
@@ -266,8 +266,8 @@ private:
     //FSF RAW in different document
     FILE* m_playbackFSFFileRaw;
     fsf_data_t fsfDataRaw;
-    aditof::FSF* pFsfReadRaw = NULL;
-    aditof::FSF* pFsfWriteRaw = NULL;
+    aditof::FSF_Common* pFsfReadRaw = NULL;
+    aditof::FSF_Common* pFsfWriteRaw = NULL;
     aditof::OptionalFileHeader optFileHeaderRaw;
     aditof::StreamInfo streamInfoRaw;
     aditof::Stream streamRaw;
