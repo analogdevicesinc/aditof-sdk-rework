@@ -801,23 +801,23 @@ void ADIToFRecorder::recordFSFThread()
 		frame->getData("raw", &rawData);
 
         uint16_t *pHeader = nullptr;
-        frame->getData("header", &pHeader);
+        //frame->getData("header", &pHeader);
 
-		for (size_t streamCnt = 0; streamCnt < fileHeaderRaw.nStreams; streamCnt++)
-		{
-			streamRaw.streamHeader.TimeStamp = frameDetails.totalCaptures;
-			streamRaw.streamHeader.CompressedStreamSize = size;
-			streamRaw.optionalStreamHeader.assign(reinterpret_cast<const char*>(pHeader) + (EMBED_HDR_LENGTH * streamCnt), EMBED_HDR_LENGTH);
-			streamRaw.streamComment = "RAW";
-			streamRaw.streamData.assign(reinterpret_cast<const char*>(rawData) + (size * streamCnt), reinterpret_cast<const char*>(rawData) + size + (size * streamCnt));
-
-			if (pFsfWriteRaw->SetStream(frameCtr, streamCnt, streamRaw) != aditof::FsfStatus::SUCCESS)
-			{
-				LOG(ERROR) << "Could not set stream.";
-				recordFSFThreadFail();
-				break;
-			}
-		}
+		//for (size_t streamCnt = 0; streamCnt < fileHeaderRaw.nStreams; streamCnt++)
+		//{
+		//	streamRaw.streamHeader.TimeStamp = frameDetails.totalCaptures;
+		//	streamRaw.streamHeader.CompressedStreamSize = size;
+		//	//streamRaw.optionalStreamHeader.assign(reinterpret_cast<const char*>(pHeader) + (EMBED_HDR_LENGTH * streamCnt), EMBED_HDR_LENGTH);
+		//	streamRaw.streamComment = "RAW";
+		//	streamRaw.streamData.assign(reinterpret_cast<const char*>(rawData) + (size * streamCnt), reinterpret_cast<const char*>(rawData) + size + (size * streamCnt));
+		//
+		//	if (pFsfWriteRaw->SetStream(frameCtr, streamCnt, streamRaw) != aditof::FsfStatus::SUCCESS)
+		//	{
+		//		LOG(ERROR) << "Could not set stream.";
+		//		recordFSFThreadFail();
+		//		break;
+		//	}
+		//}
 
 		frameCtr++;
 	}
