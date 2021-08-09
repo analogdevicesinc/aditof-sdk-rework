@@ -958,3 +958,8 @@ aditof::Status CameraItof::saveCCBToFile(const std::string &filePath) const {
 
     return aditof::Status::OK;
 }
+
+void CameraItof::onlyABFlag(int option)
+{    
+    tofi_onlyABFlag(m_tofi_compute_context,option);
+}

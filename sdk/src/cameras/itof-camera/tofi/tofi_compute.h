@@ -80,6 +80,11 @@ TOFI_COMPUTE_API int TofiCompute(
 TOFI_COMPUTE_API void FreeTofiCompute(
     TofiComputeContext *p_tofi_compute_context);
 
+/// Function to enable/disable onlyAB flag
+/// @param[in] TofiConfig *p_tofi_cal_config: pointer to the TOFI
+/// @param[in] option: '1' for enable & '0' for disable
+void tofi_onlyABFlag(TofiComputeContext *const p_tofi_compute_context, int option);
+
 #ifdef __cplusplus
 }
 #endif

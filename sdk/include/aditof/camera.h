@@ -182,6 +182,12 @@ class SDK_API Camera {
      */
     virtual Status getTemperatureSensors(
         std::vector<std::shared_ptr<TemperatureSensorInterface>> &sensors) = 0;
+    
+    /**
+     * @brief Enables/disables the onlyAB option in depth engine.     
+     * @param[in] options- 1 for disable , 0 for enable
+     */
+    virtual void onlyABFlag(int option) = 0;
 };
 
 } // namespace aditof

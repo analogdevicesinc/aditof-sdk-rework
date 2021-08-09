@@ -684,7 +684,7 @@ void saveFrame(std::string id, char* data, size_t size){
 
 aditof::Status Adsd3100Sensor::getFrame(uint16_t *buffer) {
      using namespace aditof;
-    struct v4l2_buffer buf[MAX_SUBFRAMES_COUNT];
+    struct v4l2_buffer buf[MAX_SUBFRAMES_COUNT] , buf_discard;
     struct VideoDev *dev;
     Status status;
     unsigned int buf_data_len;
@@ -693,6 +693,13 @@ aditof::Status Adsd3100Sensor::getFrame(uint16_t *buffer) {
     dev = &m_implData->videoDevs[0];
 
     for (int idx = 0; idx < m_capturesPerFrame; idx++) {
+		
+		//Hack to force clear all queued buffers and get latest capture
+        for (int buff_nr = 0;  buff_nr < dev->nVideoBuffers; buff_nr ++) {
+            dequeueInternalBufferPrivate(buf_discard, dev);
+            enqueueInternalBufferPrivate(buf_discard, dev);
+        }
+		
         status = waitForBufferPrivate(dev);
         if (status != Status::OK) {
             return status;
