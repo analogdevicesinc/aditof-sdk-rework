@@ -27,3 +27,5 @@ TofiComputeContext *InitTofiCompute(
     };
 
 void FreeTofiCompute(TofiComputeContext *p_tofi_compute_context) {};
+
+void tofi_onlyABFlag(TofiComputeContext *const p_tofi_compute_context, int option);

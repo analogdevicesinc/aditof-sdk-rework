@@ -136,6 +136,13 @@ class CameraItof : public aditof::Camera {
      */
     //aditof::Status writeModuleEeprom(const std::string &ccbFileName, const std::string &cfgFileName);
 
+    /**
+     * @brief Function to enable/disable onlyAB flag     
+     * @param[in] bool option: '1' for enable & '0' for disable
+     * @return None
+     */
+    void onlyABFlag(bool option) override;
+
   private:
 
     /**
@@ -279,15 +286,7 @@ class CameraItof : public aditof::Camera {
      * @return Status
      * @see Status
      */
-    aditof::Status saveCCBToFile(const std::string &filePath) const;
-
-    /**
-     * @brief Function to enable/disable onlyAB flag
-     * @param[in] TofiConfig *p_tofi_cal_config: pointer to the TOFI
-     * @param[in] int option: '1' for enable & '0' for disable
-     * @return None
-     */
-    void onlyABFlag(int option);
+    aditof::Status saveCCBToFile(const std::string &filePath) const;    
 
   private:
     using noArgCallable = std::function<aditof::Status()>;
