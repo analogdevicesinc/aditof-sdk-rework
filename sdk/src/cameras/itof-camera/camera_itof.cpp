@@ -134,7 +134,7 @@ aditof::Status CameraItof::initialize() {
         // Get sensorfirmware file location
         const cJSON *json_sensorFirmware_file = cJSON_GetObjectItemCaseSensitive(config_json, "sensorFirmware");
         if (cJSON_IsString(json_sensorFirmware_file) && (json_sensorFirmware_file->valuestring != NULL)) {
-            if (m_sensorFirmwareFile.empty()) {
+            if (1) { //(m_sensorFirmwareFile.empty()) {
                 // save firmware file location
                 m_sensorFirmwareFile = std::string(json_sensorFirmware_file->valuestring);
             } else {
@@ -145,7 +145,7 @@ aditof::Status CameraItof::initialize() {
         // Get calibration file location
         const cJSON *json_ccb_calibration_file = cJSON_GetObjectItemCaseSensitive(config_json, "CCB_Calibration");
         if (cJSON_IsString(json_ccb_calibration_file) && (json_ccb_calibration_file->valuestring != NULL)) {
-            if (m_ccb_calibrationFile.empty()) {
+            if (1) { //(m_ccb_calibrationFile.empty()) {
                 // save calibration file location
                 m_ccb_calibrationFile = std::string(json_ccb_calibration_file->valuestring);
             } else {
@@ -930,7 +930,7 @@ aditof::Status CameraItof::loadModuleData() {
 
     if (!tempJsonFile.empty()) {
         setControl("initialization_config", tempJsonFile);
-        return initialize();
+        return initialize();        
     } else {
         LOG(ERROR) << "Error loading module data";
         return Status::GENERIC_ERROR;
@@ -957,4 +957,9 @@ aditof::Status CameraItof::saveCCBToFile(const std::string &filePath) const {
     destination << source.rdbuf();
 
     return aditof::Status::OK;
+}
+
+void CameraItof::onlyABFlag(bool option)
+{    
+    tofi_onlyABFlag(m_tofi_compute_context, (int)option);
 }
