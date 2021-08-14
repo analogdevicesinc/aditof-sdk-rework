@@ -187,7 +187,7 @@ class SDK_API Camera {
      * @brief Enables/disables the onlyAB option in depth engine.     
      * @param[in] options- 1 for disable , 0 for enable
      */
-    virtual void onlyABFlag(int option) = 0;
+    virtual void onlyABFlag(bool option) = 0;
 };
 
 } // namespace aditof
