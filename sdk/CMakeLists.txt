@@ -206,6 +206,10 @@ if ( JETSON )
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -latomic")
 endif()
 
+if ( NXP )
+    target_link_libraries(${PROJECT_NAME} PRIVATE gpiodcxx)
+endif()
+
 if( APPLE )
     find_library( LIBUVC_LIB libuvc.dylib /usr/local/lib/ )
     if( NOT LIBUVC_LIB)
