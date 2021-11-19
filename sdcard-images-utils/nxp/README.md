@@ -20,6 +20,6 @@ For SD card bootable images, plug in a microSD and run the following, where sdX 
 
 Take care S3 boot switches to be configured accordingly.
 
-## Work In Progress
-		2. Automatic resize of the ROOTFS partition is not performed. Depending on the SD card the user can resize
-		partition 2 to fill the whole SD card. Don't forget to "e2fsck -f /dev/sdX" and "resize2fs /dev/sdX"
+## SD card creator
+To write a image into a sdcard, run
+`create_sd.sh images/microsd-ae93cfb.img /dev/sdc`
