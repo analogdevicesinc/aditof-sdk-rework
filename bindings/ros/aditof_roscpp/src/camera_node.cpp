@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<Camera> camera = initCamera(argc, argv);
     ROS_ASSERT_MSG(camera, "initCamera call failed");
 
-    setFrameType(camera, "qmp");
+    setFrameType(camera, "pcm");
     startCamera(camera);
 
     ros::init(argc, argv, "aditof_camera_node");
