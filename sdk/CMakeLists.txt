@@ -148,13 +148,13 @@ endif()
 if (USE_ITOF)
 	
 	if ( UNIX )
-    		add_library(libtofi_compute SHARED IMPORTED)
+		add_library(libtofi_compute STATIC IMPORTED)
     		set_target_properties(libtofi_compute PROPERTIES
 	 		IMPORTED_LOCATION "${LIBTOFI_LIBDIR_PATH}/libtofi_compute.so"
          		IMPORTED_NO_SONAME 1
     		)
 
-    		add_library(libtofi_config SHARED IMPORTED)
+	add_library(libtofi_config STATIC IMPORTED)
     		set_target_properties(libtofi_config PROPERTIES
          		IMPORTED_LOCATION "${LIBTOFI_LIBDIR_PATH}/libtofi_config.so"
          		IMPORTED_NO_SONAME 1

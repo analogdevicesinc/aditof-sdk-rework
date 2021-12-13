@@ -33,8 +33,10 @@
 
 #include <aditof/frame.h>
 #include <aditof/system.h>
-
+#include <ros/package.h>
 #include <ros/ros.h>
+#include <string.h>
+#include <unistd.h>
 
 using namespace aditof;
 
@@ -52,6 +54,66 @@ std::string parseArgs(int argc, char **argv) {
         << "No ip provided, attempting to connect to the camera through USB";
     return std::string();
 }
+
+/*std::void rewritePathsInConfigJson(std:string jsonPath, std::string newPath)
+{
+    / Parse config.json
+    std::string config = jsonPath;
+    std::ifstream ifs(config.c_str());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    cJSON *config_json = cJSON_Parse(content.c_str());
+    if (config_json != NULL) {
+        // Get sensorfirmware file location
+        const cJSON *json_sensorFirmware_file = cJSON_GetObjectItemCaseSensitive(config_json, "sensorFirmware");
+        if (cJSON_IsString(json_sensorFirmware_file) && (json_sensorFirmware_file->valuestring != NULL)) {
+            if (m_sensorFirmwareFile.empty()) {
+                // save firmware file location
+                m_sensorFirmwareFile = std::string(json_sensorFirmware_file->valuestring);
+            } else {
+                LOG(WARNING) << "Duplicate firmware file ignored: " << json_sensorFirmware_file->valuestring;
+            }
+        }
+
+        // Get calibration file location
+        const cJSON *json_ccb_calibration_file = cJSON_GetObjectItemCaseSensitive(config_json, "CCB_Calibration");
+        if (cJSON_IsString(json_ccb_calibration_file) && (json_ccb_calibration_file->valuestring != NULL)) {
+            if (m_ccb_calibrationFile.empty()) {
+                // save calibration file location
+                m_ccb_calibrationFile = std::string(json_ccb_calibration_file->valuestring);
+            } else {
+                LOG(WARNING) << "Duplicate calibration file ignored: " << json_ccb_calibration_file->valuestring;
+            }
+        }
+
+        // Get optional eeprom type name
+        const cJSON *eeprom_type_name = cJSON_GetObjectItemCaseSensitive(config_json, "MODULE_EEPROM_TYPE");
+        if (cJSON_IsString(eeprom_type_name) && (eeprom_type_name->valuestring != NULL)) {
+            m_eepromDeviceName = eeprom_type_name->valuestring;
+        }
+
+        // Get depth ini file location
+        const cJSON *json_depth_ini_file = cJSON_GetObjectItemCaseSensitive(config_json, "DEPTH_INI");
+        if (cJSON_IsString(json_depth_ini_file) && (json_depth_ini_file->valuestring != NULL))
+            // save depth ini file location
+            m_ini_depth = std::string(json_depth_ini_file->valuestring);
+
+        // Get optional power config
+        const cJSON *json_vaux_pwr = cJSON_GetObjectItemCaseSensitive(config_json, "VAUX_POWER_ENABLE");
+        if (cJSON_IsString(json_vaux_pwr) && (json_vaux_pwr->valuestring != NULL)) {
+            m_sensor_settings.push_back(std::make_pair(json_vaux_pwr->string, atoi(json_vaux_pwr->valuestring)));
+        }
+
+        // Get optional power config
+        const cJSON *json_vaux_voltage = cJSON_GetObjectItemCaseSensitive(config_json, "VAUX_POWER_VOLTAGE");
+        if (cJSON_IsString(json_vaux_voltage) && (json_vaux_voltage->valuestring != NULL)) {
+            m_sensor_settings.push_back(std::make_pair(json_vaux_voltage->string, atoi(json_vaux_voltage->valuestring)));
+        }
+    } else if (!config.empty()) {
+        LOG(ERROR) << "Couldn't parse config file: " << config.c_str();
+        return Status::GENERIC_ERROR;
+    }
+}*/
 
 std::shared_ptr<Camera> initCamera(int argc, char **argv) {
 
@@ -73,12 +135,57 @@ std::shared_ptr<Camera> initCamera(int argc, char **argv) {
     }
 
     std::shared_ptr<Camera> camera = cameras.front();
+
+    /*std::string package_path = ros::package::getPath("aditof_roscpp");
+    package_path = package_path + "/../../config/config_walden_nxp.json";
+    LOG(INFO) << "Json config file location: "<< package_path;*/
+
+    // user can pass any config.json stored anywhere in HW
+    status =
+        camera->setControl("initialization_config",
+                           "/home/analog/.ros/config/config_walden_nxp.json");
+    if (status != Status::OK) {
+        LOG(ERROR) << "Could not set the initialization config file!";
+        return 0;
+    }
+
     status = camera->initialize();
     if (status != Status::OK) {
         LOG(ERROR) << "Could not initialize camera!";
-        return nullptr;
+        return 0;
     }
+
+    status = camera->setControl("powerUp", "call");
+    if (status != Status::OK) {
+        LOG(ERROR) << "Could not PowerUp camera!";
+        return 0;
+    }
+
+    // optionally load configuration data from module memory
+    status = camera->setControl("loadModuleData", "call");
+    if (status != Status::OK) {
+        LOG(INFO) << "No CCB/CFG data found in camera module,";
+        LOG(INFO) << "Loading calibration(ccb) and configuration(cfg) data "
+                     "from JSON config file...";
+    }
+
+    status = camera->setControl("enableDepthCompute", "off");
+    if (status != Status::OK) {
+        LOG(ERROR) << "Could not set depthCompute to off!";
+        return 0;
+    }
+
     return camera;
+}
+void startCamera(const std::shared_ptr<aditof::Camera> &camera) {
+    Status status = Status::OK;
+
+    status = camera->start();
+    if (status != Status::OK) {
+        LOG(ERROR) << "Could not start camera!";
+        return;
+    }
+    return;
 }
 
 void setFrameType(const std::shared_ptr<aditof::Camera> &camera,
