@@ -27,11 +27,10 @@ source /opt/ros/$ROS_DISTRO/setup.sh
 catkin_make -DADITOF_CMAKE_INSTALL_PREFIX=$1 -DADITOF_CMAKE_PREFIX_PATH=$2
 
 #set environmental variables:
-export IP=$(hostname -I | awk '{print $1}')
-export ROS_MASTER_URI=http://$IP:11311
-export ROS_IP=$IP
-echo "Ros Master IP: "$IP:11311
-source devel/setup.bash
-roslaunch aditof_roscpp camera_node.launch 
+#export IP=$(hostname -I | awk '{print $1}')
+#export ROS_MASTER_URI=http://$IP:11311
+#export ROS_IP=$IP
+#echo "Ros Master IP: "$IP:11311
+#source devel/setup.bash
+#roslaunch aditof_roscpp camera_node.launch 
 
-bash
