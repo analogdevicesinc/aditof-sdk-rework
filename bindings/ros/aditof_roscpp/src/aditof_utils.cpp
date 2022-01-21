@@ -40,13 +40,16 @@
 
 using namespace aditof;
 
-std::string parseArgs(int argc, char **argv) {
+std::string parseArgsForIp(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
     FLAGS_alsologtostderr = 1;
 
     if (argc > 1) {
         std::string ip = argv[1];
-        if (!ip.empty()) {
+        unsigned char a, b, c, d;
+        bool isIp =
+            (sscanf(ip, "%d.%d.%d.%d", &a, &b, &c, &d) == 4) ? true : false;
+        if (!ip.empty() && isIp) {
             return ip;
         }
     }
@@ -55,11 +58,30 @@ std::string parseArgs(int argc, char **argv) {
     return std::string();
 }
 
+std::bool parseArgsForDepthLibarary(int argc, char **argv) {
+    google::InitGoogleLogging(argv[0]);
+
+    if (argc > 1) {
+        for (int i = 1; i < argc; i++) {
+            std::string var = argv[i];
+            unsigned char a, b, c, d;
+            bool isIp = (sscanf(var, "%d.%d.%d.%d", &a, &b, &c, &d) == 4)
+                            ? true
+                            : false;
+            if (!ip.empty() && !isIp) {
+                (strcmp(var, "true")) ? true : false;
+            }
+        }
+    }
+    LOG(INFO) << "No depth_compute option provided, default value: FALSE";
+    return false;
+}
 
 std::shared_ptr<Camera> initCamera(int argc, char **argv) {
 
     Status status = Status::OK;
-    std::string ip = parseArgs(argc, argv);
+    std::string ip = parseArgsForIp(argc, argv);
+    bool useDepthLibrary = parseArgsForDepthLibarary(argc, argv);
 
     System system;
 
@@ -82,12 +104,20 @@ std::shared_ptr<Camera> initCamera(int argc, char **argv) {
     LOG(INFO) << "Json config file location: "<< package_path;*/
 
     // user can pass any config.json stored anywhere in HW
-    status =
-        camera->setControl("initialization_config",
-                           "/home/analog/.ros/config/config_walden_nxp.json");
-    if (status != Status::OK) {
-        LOG(ERROR) << "Could not set the initialization config file!";
-        return 0;
+    if (useDepthLibrary) {
+        status = camera->setControl(
+            "initialization_config",
+            "/home/analog/.ros/config/config_walden_nxp.json");
+        if (status != Status::OK) {
+            LOG(ERROR) << "Could not set the initialization config file!";
+            return 0;
+        }
+    } else {
+        status = camera->setControl("raw");
+        if (status != Status::OK) {
+            LOG(ERROR) << "Could not set the initialization config file!";
+            return 0;
+        }
     }
 
     status = camera->initialize();
