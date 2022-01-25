@@ -40,17 +40,21 @@
 
 using namespace aditof;
 
+bool isValidIPv4(const char *IPAddress)
+{
+   unsigned char a,b,c,d;
+   return sscanf(IPAddress,"%d.%d.%d.%d", &a, &b, &c, &d) == 4;
+}
+
 std::string parseArgsForIp(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
     FLAGS_alsologtostderr = 1;
-
+    
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
             std::string ip = argv[i];
-            bool isIp = (std::string::npos == ip.find_first_of("0123456789"));
-            if (!ip.empty() && isIp) {
+            if (isValidIPv4(ip.c_str()))
                 return ip;
-            }
         }
     }
     LOG(INFO)
@@ -63,11 +67,8 @@ bool parseArgsForDepthLibarary(int argc, char **argv) {
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
             std::string var = argv[i];
-            bool isIp = (std::string::npos == var.find_first_of("0123456789"));
-
-            if (!var.empty() && !isIp) {
-                return ((strcmp(var.c_str(), "true")==0)? true : false);
-            }
+            if (std::strcmp(var.c_str(),"true")==0)
+                return true;
         }
     }
     LOG(INFO) << "No depth_compute option provided, default value: FALSE";

@@ -35,6 +35,7 @@
 #include <aditof/camera.h>
 #include <glog/logging.h>
 
+bool isValidIPv4(const char *IPAddress);
 std::string parseArgs(int argc, char **argv);
 bool parseArgsForDepthLibarary(int argc, char **argv);
 std::shared_ptr<aditof::Camera> initCamera(int argc, char **argv);
