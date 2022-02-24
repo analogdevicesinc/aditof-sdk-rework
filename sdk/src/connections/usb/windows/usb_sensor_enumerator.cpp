@@ -221,3 +221,9 @@ Status UsbSensorEnumerator::getTemperatureSensors(
 
     return Status::OK;
 }
+
+aditof::Status UsbSensorEnumerator::getCardImageVersion(
+    std::string &cardImageVersion) const {
+    cardImageVersion = m_cardImageVersion;
+    return aditof::Status::OK;
+}
