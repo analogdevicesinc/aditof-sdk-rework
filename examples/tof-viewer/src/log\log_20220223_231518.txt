@@ -1,0 +1,3 @@
+WARNING: Logging before InitGoogleLogging() is written to STDERR
+I0223 23:15:19.721896 13396 system_impl.cpp:73] SDK version: 2.1.0 | branch: master | commit: 15f69d4
+I0223 23:15:19.722194 13396 usb_sensor_enumerator.cpp:56] Looking for USB connected sensors
