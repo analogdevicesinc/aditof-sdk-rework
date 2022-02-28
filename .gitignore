@@ -1,6 +1,0 @@
-build/
-
-sdk/include/aditof/version.h
-
-*deps/
-*.temp/

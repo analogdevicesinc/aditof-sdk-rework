@@ -1,7 +1,0 @@
-{
-"sensorFirmware": "./config/NXP_MIPI4kSuperframe.cfg",
-"VAUX_POWER_VOLTAGE": "18",
-"skip_network_cameras": "on",
-"camera_ip": "192.168.1.2",
-"DEPTH_INI": "./config/RawToDepth.ini"
-}
