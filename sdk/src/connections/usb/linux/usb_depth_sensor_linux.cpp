@@ -241,6 +241,7 @@ UsbDepthSensor::setFrameType(const aditof::DepthSensorFrameType &type) {
     requestMsg.set_func_name(usb_payload::FunctionName::SET_FRAME_TYPE);
     std::string requestStr;
     requestMsg.SerializeToString(&requestStr);
+    LOG(INFO) << "FD USB DEPTH SENSOR <<<<<< " << m_implData->fd;
     status = UsbLinuxUtils::uvcExUnitSendRequest(m_implData->fd, requestStr);
     if (status != Status::OK) {
         LOG(ERROR) << "Set frame type operation failed on UVC gadget";
@@ -259,7 +260,7 @@ UsbDepthSensor::setFrameType(const aditof::DepthSensorFrameType &type) {
     min = m_implData->fmt.fmt.pix.bytesperline * m_implData->fmt.fmt.pix.height;
     if (m_implData->fmt.fmt.pix.sizeimage < min)
         m_implData->fmt.fmt.pix.sizeimage = min;
-
+LOG(INFO) << "FD <<<<< " << m_implData->fd;
     if (-1 ==
         UsbLinuxUtils::xioctl(m_implData->fd, VIDIOC_S_FMT, &m_implData->fmt)) {
         LOG(WARNING) << "Failed to set Pixel Format, error: " << errno << "("
